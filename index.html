@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vokabel-Abenteuer – Klasse 6</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f7fb;color:#182230}
+header{background:#315efb;color:white;padding:18px;text-align:center}
+main{max-width:900px;margin:auto;padding:16px}
+.card{background:white;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 3px 12px #0001}
+button,input,select{font-size:17px;padding:11px;border-radius:10px;border:1px solid #ccd4e0}
+button{cursor:pointer;background:#315efb;color:white;border:0;margin:5px}
+button.secondary{background:#687386}
+button.good{background:#18864b}
+button.warn{background:#b66b00}
+.hidden{display:none}
+.tabs button{width:30%}
+.word{font-size:32px;font-weight:bold;text-align:center;margin:28px 0}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice{background:#eef2ff;color:#182230}
+.choice.crossed{text-decoration:line-through;opacity:.45}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{padding:12px;background:#eef2ff;border-radius:12px}
+table{width:100%;border-collapse:collapse}
+td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+.small{font-size:13px;color:#687386}
+</style>
+</head>
+<body>
+<header><h1>📚 Vokabel-Abenteuer</h1><div>Englisch & Französisch · Klasse 6 Realschule</div><div id="todayLine" class="small" style="color:white;margin-top:6px"></div></header>
+<main>
+<div class="card">
+<div class="tabs">
+<button onclick="show('learn')">Lernen</button>
+<button onclick="show('add')">Vokabeln</button>
+<button onclick="show('parent')">Elternbereich</button>
+</div>
+</div>
+
+<section id="learn">
+<div class="card">
+<h2>🎯 Lernpaket wählen</h2>
+<select id="lang"><option value="en">🇬🇧 Englisch</option><option value="fr">🇫🇷 Französisch</option></select>
+<select id="direction"><option value="de-to-foreign">Deutsch → Fremdsprache</option><option value="foreign-to-de">Fremdsprache → Deutsch</option></select>
+<select id="mode"><option value="write">✍️ Antwort eingeben</option><option value="mc">🔘 Multiple Choice</option></select>
+<select id="roundSize"><option value="10">10 Vokabeln</option><option value="20">20 Vokabeln</option><option value="30">30 Vokabeln</option></select>
+<button onclick="start()">Lernrunde starten</button>
+<p class="small">💡 Vokabeln, die du falsch beantwortest, kommen schneller wieder. Sichere Vokabeln werden mit größeren Abständen wiederholt.</p><div id="dueInfo" class="small"></div>
+</div>
+<div id="session" class="card hidden">
+<div class="stats"><div class="stat">⭐ <span id="stars">0</span></div><div class="stat">🔥 Serie: <span id="streak">0</span></div><div class="stat">⏱️ <span id="time">0:00</span></div></div>
+<div class="word" id="question">–</div>
+<div id="answerArea"></div>
+<div id="feedback"></div>
+<button class="secondary" onclick="finish()">Lernrunde beenden</button>
+<button class="warn" onclick="startTest()">📝 Test starten</button>
+<div id="rewardInfo" class="small"></div>
+</div>
+</section>
+
+<section id="add" class="hidden">
+<div class="card">
+<h2>➕ Eigene Vokabeln</h2>
+<p class="small">Du kannst deine Schulvokabeln selbst eintragen. Eine Vokabel gehört immer zu einer Sprache.</p>
+<select id="addLang"><option value="en">🇬🇧 Englisch</option><option value="fr">🇫🇷 Französisch</option></select>
+<input id="native" placeholder="Deutsch, z. B. Haus">
+<input id="foreign" placeholder="Fremdsprache, z. B. house">
+<input id="unit" placeholder="Lektion/Thema, z. B. Unit 2 (optional)">
+<button onclick="addWord()">Vokabel speichern</button>
+<div id="list"></div>
+</div>
+</section>
+
+<section id="parent" class="hidden">
+<div class="card">
+<h2>🔒 Elternbereich</h2>
+<div id="login"><input id="pin" type="password" placeholder="PIN"><button onclick="login()">Öffnen</button></div>
+<div id="parentContent" class="hidden">
+<div class="stats">
+<div class="stat">⭐ Punkte: <b id="pStars">0</b></div>
+<div class="stat">⏱️ Lernzeit heute: <b id="pTime">0 Min.</b></div>
+<div class="stat">🇬🇧 Englisch: <b id="pEn">0</b></div>
+<div class="stat">🇫🇷 Französisch: <b id="pFr">0</b></div>
+<div class="stat">🎯 Tests bestanden: <b id="pTests">0</b></div>
+</div>
+<h3>📅 Lernstatistik</h3><div id="week"></div>
+<h3>Schwierigste Vokabeln</h3><div id="hard"></div>
+<h3>Vokabelliste</h3><div id="parentList"></div>
+<button class="warn" onclick="changePin()">PIN ändern</button><button class="secondary" onclick="resetLearningSchedule()">Wiederholungsplan zurücksetzen</button>
+</div>
+</div>
+</section>
+</main>
+
+<script>
+const KEY='vok6';
+let S=JSON.parse(localStorage.getItem(KEY)||'null')||{
+ words:[
+  {l:'en',d:'Haus',f:'house'},{l:'en',d:'Freund',f:'friend'},{l:'en',d:'Schule',f:'school'},
+  {l:'en',d:'essen',f:'eat'},{l:'en',d:'spielen',f:'play'},
+  {l:'fr',d:'Haus',f:'maison'},{l:'fr',d:'Freund',f:'ami'},{l:'fr',d:'Schule',f:'école'},
+  {l:'fr',d:'essen',f:'manger'},{l:'fr',d:'spielen',f:'jouer'}
+ ],
+ stars:0,phone:0,pin:'1234',stats:{},days:{},tests:{en:0,fr:0}
+};
+let cur=null, timer=null, started=0,lastAction=0,active=false,streak=0,mode='write',lang='en',choices=[],direction='de-to-foreign',roundLeft=0,testMode=false,testCorrect=0,testTotal=0;
+
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+function today(){return new Date().toISOString().slice(0,10)}
+function ensureDay(){
+ let d=today();
+ if(!S.days[d])S.days[d]={sec:0,right:0,learnBlocks:0};
+ return S.days[d]
+}
+function addLearningSeconds(sec){
+ if(sec<=0)return;
+ let d=ensureDay(), before=Math.floor(d.sec/900);
+ d.sec+=sec;
+ let after=Math.floor(d.sec/900);
+ if(after>before){
+   S.phone+=(after-before)*5;
+   d.learnBlocks=after;
+ }
+ save(); updateTime(); updateTop()
+}
+function activeTick(){
+ if(!active)return;
+ if(document.hidden){active=false;return}
+ let now=Date.now();
+ let dt=Math.min(2,(now-started)/1000);
+ started=now;
+ if(now-lastAction>90000){active=false; addLearningSeconds(dt); return}
+ addLearningSeconds(dt);
+}
+function touch(){if(!active)active=true;lastAction=Date.now();started=Date.now()}
+function updateTime(){
+ let sec=ensureDay().sec;
+ let t=Math.floor(sec/60)+':'+String(Math.floor(sec%60)).padStart(2,'0');
+ document.getElementById('time').textContent=t
+}
+function updateTop(){
+ let d=ensureDay();
+ document.getElementById('topStars').textContent=S.stars;
+ document.getElementById('topPhone').textContent=S.phone+' Min.';
+ document.getElementById('topTime').textContent=Math.floor(d.sec/60)+' Min.';
+ document.getElementById('todayLine').textContent='Heute gelernt: '+Math.floor(d.sec/60)+' Min. · 15 Min. Lernen = 5 Min. Handyzeit';
+}
+setInterval(activeTick,1000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){active=false}else if(cur){touch()}});
+updateTop();
+
+function show(id){['learn','add','parent'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));if(id==='add')renderList()}
+function start(){
+ lang=document.getElementById('lang').value;
+ mode=document.getElementById('mode').value;
+ direction=document.getElementById('direction').value;
+ roundLeft=parseInt(document.getElementById('roundSize').value,10);
+ testMode=false;testCorrect=0;testTotal=0;
+ if(pool().length===0){alert('Bitte zuerst Vokabeln für diese Sprache eintragen.');return}
+ document.getElementById('session').classList.remove('hidden');
+ streak=0;touch();next();updateTime();updateTop()
+}
+function pool(){
+ return S.words.filter(w=>w.l===lang)
+}
+function ensureWordState(w){let k=w.l+'|'+w.d+'|'+w.f;if(!S.stats[k])S.stats[k]={l:w.l,d:w.d,f:w.f,right:0,wrong:0,level:0,next:0,last:0};let x=S.stats[k];if(x.level===undefined)x.level=0;if(x.next===undefined)x.next=0;return x}
+function dueWords(){let now=Date.now();return pool().filter(w=>ensureWordState(w).next<=now)}
+function chooseWord(){let p=pool(),due=dueWords(),c=due.length?due:p,weighted=[];c.forEach(w=>{let x=ensureWordState(w),weight=1;if(x.level===0)weight+=4;if(x.wrong>x.right)weight+=4;else if(x.wrong>0)weight+=2;if(due.includes(w))weight+=5;for(let i=0;i<weight;i++)weighted.push(w)});return weighted[Math.floor(Math.random()*weighted.length)]}
+function scheduleWord(ok){let x=ensureWordState(cur),now=Date.now();if(!ok){x.level=0;x.next=now+5*60*1000}else{x.level=Math.min(6,(x.level||0)+1);let iv=[10*60*1000,60*60*1000,6*60*60*1000,24*60*60*1000,3*24*60*60*1000,7*24*60*60*1000];x.next=now+iv[x.level-1]}x.last=now}
+function dueLabel(){let e=document.getElementById('dueInfo');if(e)e.textContent='📌 '+dueWords().length+' von '+pool().length+' Vokabeln sind jetzt zur Wiederholung fällig.'}
+function next(){
+ document.getElementById('feedback').innerHTML='';
+ if(!testMode && roundLeft<=0){finish();return}
+ if(testMode && testTotal>=10){finishTest();return}
+ cur=chooseWord();
+ dueLabel();
+ document.getElementById('question').textContent=direction==='de-to-foreign'?cur.d:cur.f;
+ touch();
+ if(mode==='write'){
+   document.getElementById('answerArea').innerHTML='<input id="ans" autocomplete="off" placeholder="'+(direction==='de-to-foreign'?'Deine Übersetzung':'Deutsches Wort')+'"><button class="good" onclick="checkWrite()">Prüfen</button>';
+   document.getElementById('ans').focus();
+   document.getElementById('ans').onkeydown=e=>{if(e.key==='Enter')checkWrite()};
+ }else{
+   choices=makeChoices(cur);
+   document.getElementById('answerArea').innerHTML='<div class="choices">'+choices.map((x,i)=>`<button class="choice" onclick="checkChoice(${i},this)">${x}</button>`).join('')+'</div>';
+ }
+ document.getElementById('rewardInfo').textContent=testMode?'Test: '+testTotal+'/10 · Bestehen ab 8 richtigen':'Noch '+roundLeft+' Aufgaben in dieser Runde';
+}
+function targetAnswer(){return direction==='de-to-foreign'?cur.f:cur.d}
+function record(ok){
+ let k=cur.l+'|'+cur.d+'|'+cur.f;
+ if(!S.stats[k])S.stats[k]={l:cur.l,d:cur.d,f:cur.f,right:0,wrong:0,level:0,next:0,last:0};
+ ensureWordState(cur);
+ if(ok){
+   S.stats[k].right++;ensureDay().right++;streak++;S.stars++;
+   if(testMode)testCorrect++;
+   document.getElementById('feedback').innerHTML='<p>✅ Richtig! +1 ⭐</p>'
+ }else{
+   S.stats[k].wrong++;streak=0;
+   document.getElementById('feedback').innerHTML='<p>❌ Falsch. Richtig wäre: <b>'+targetAnswer()+'</b></p>'
+ }
+ scheduleWord(ok);
+ save();document.getElementById('stars').textContent=S.stars;document.getElementById('streak').textContent=streak;renderParent();updateTop()
+}
+function checkWrite(){
+ let a=document.getElementById('ans').value;
+ if(!a.trim())return;
+ let ok=norm(a)===norm(targetAnswer());
+ record(ok);
+ if(testMode){testTotal++; if(!ok){document.getElementById('ans').value=''} setTimeout(next,650);return}
+ if(ok){roundLeft--;setTimeout(next,650)}else{document.getElementById('ans').value='';document.getElementById('ans').focus()}
+}
+function makeChoices(w){
+ let correct=targetAnswer();
+ let arr=[correct],others=pool().filter(x=>x!==w).sort(()=>Math.random()-.5);
+ others.slice(0,3).forEach(x=>arr.push(direction==='de-to-foreign'?x.f:x.d));
+ while(arr.length<4)arr.push(correct+'?');
+ return arr.sort(()=>Math.random()-.5)
+}
+function checkChoice(i,btn){
+ if(btn.classList.contains('crossed'))return;
+ let ok=norm(choices[i])===norm(targetAnswer());
+ if(ok){record(true); if(testMode)testTotal++; else roundLeft--; setTimeout(next,650)}
+ else{btn.classList.add('crossed');record(false);if(testMode)testTotal++; }
+}
+function finishTest(){
+ active=false;
+ let passed=testCorrect>=8;
+ if(passed){S.phone+=5;S.stars+=10;S.tests[lang]=(S.tests[lang]||0)+1}
+ save();
+ document.getElementById('feedback').innerHTML=passed?'<h3>🎉 Test bestanden!</h3><p>+5 Minuten Handyzeit und +10 ⭐</p>':'<h3>Test beendet</h3><p>Leider noch nicht bestanden. Du brauchst 8 von 10.</p>';
+ document.getElementById('rewardInfo').textContent='Ergebnis: '+testCorrect+'/10';
+ updateTop();renderParent()
+}
+function startTest(){
+ if(pool().length<4){alert('Für einen Test brauchst du mindestens 4 Vokabeln.');return}
+ lang=document.getElementById('lang').value;mode='write';direction=document.getElementById('direction').value;
+ testMode=true;testCorrect=0;testTotal=0;roundLeft=0;streak=0;touch();
+ document.getElementById('session').classList.remove('hidden');next()
+}
+function finish(){
+ active=false;
+ document.getElementById('session').classList.add('hidden');
+ renderParent();updateTop()
+}
+
+function norm(x){return x.toLowerCase().trim().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')}
+function record(ok){
+ let k=cur.l+'|'+cur.d+'|'+cur.f;
+ if(!S.stats[k])S.stats[k]={l:cur.l,d:cur.d,f:cur.f,right:0,wrong:0};
+ if(ok){S.stats[k].right++;ensureDay().right++;streak++;S.stars++;document.getElementById('feedback').innerHTML='<p>✅ Richtig! +1 ⭐</p>'}
+ else{S.stats[k].wrong++;streak=0;document.getElementById('feedback').innerHTML='<p>❌ Noch nicht. Die richtige Antwort ist: <b>'+cur.f+'</b></p>'}
+ save();document.getElementById('stars').textContent=S.stars;document.getElementById('streak').textContent=streak;renderParent();
+}
+function checkWrite(){
+ let a=document.getElementById('ans').value;if(!a.trim())return;
+ let ok=norm(a)===norm(cur.f);record(ok);
+ if(!ok){document.getElementById('ans').value='';document.getElementById('ans').focus()}
+ else{setTimeout(next,700)}
+}
+function makeChoices(w){
+ let arr=[w.f];let others=pool().filter(x=>x!==w).sort(()=>Math.random()-.5);
+ others.slice(0,3).forEach(x=>arr.push(x.f));
+ while(arr.length<4)arr.push(w.f+'?');
+ return arr.sort(()=>Math.random()-.5)
+}
+function checkChoice(i,btn){
+ if(btn.classList.contains('crossed'))return;
+ if(norm(choices[i])===norm(cur.f)){record(true);setTimeout(next,700)}
+ else{btn.classList.add('crossed');record(false)}
+}
+function finish(){active=false;document.getElementById('session').classList.add('hidden');renderParent()}
+
+function addWord(){
+ let l=document.getElementById('addLang').value,d=document.getElementById('native').value.trim(),f=document.getElementById('foreign').value.trim(),u=document.getElementById('unit').value.trim();
+ if(!d||!f)return alert('Bitte beide Felder ausfüllen.');
+ S.words.push({l,d,f,u});save();document.getElementById('native').value='';document.getElementById('foreign').value='';document.getElementById('unit').value='';renderList()
+}
+function renderList(){
+ document.getElementById('list').innerHTML=S.words.map((w,i)=>`<p>${w.l==='en'?'🇬🇧':'🇫🇷'} <b>${w.d}</b> → ${w.f} <button class="secondary" onclick="del(${i})">Löschen</button></p>`).join('')
+}
+function del(i){if(confirm('Vokabel löschen?')){S.words.splice(i,1);save();renderList()}}
+
+function login(){
+ if(document.getElementById('pin').value===S.pin){document.getElementById('login').classList.add('hidden');document.getElementById('parentContent').classList.remove('hidden');renderParent()}
+ else alert('Falsche PIN.')
+}
+function resetLearningSchedule(){if(!confirm('Alle Wiederholungsstufen zurücksetzen? Punkte und Vokabelliste bleiben erhalten.'))return;Object.values(S.stats).forEach(x=>{x.level=0;x.next=0});save();renderParent();alert('Wiederholungsplan zurückgesetzt.')}
+function renderParent(){
+ if(document.getElementById('parentContent').classList.contains('hidden'))return;
+ let d=ensureDay();document.getElementById('pStars').textContent=S.stars;
+ document.getElementById('pTime').textContent=Math.floor(d.sec/60)+' Min.';
+ document.getElementById('pEn').textContent=S.words.filter(w=>w.l==='en').length;
+ document.getElementById('pFr').textContent=S.words.filter(w=>w.l==='fr').length;document.getElementById('pTests').textContent=(S.tests.en||0)+(S.tests.fr||0);
+ Object.values(S.stats).forEach(x=>{if(x.level===undefined)x.level=0;if(x.next===undefined)x.next=0});
+ let stats=Object.values(S.stats).sort((a,b)=>(b.wrong/(b.right+b.wrong||1))-(a.wrong/(a.right+a.wrong||1)));
+ document.getElementById('hard').innerHTML=stats.slice(0,10).map(x=>`<p>${x.l==='en'?'🇬🇧':'🇫🇷'} <b>${x.d}</b> → ${x.f}: ${x.wrong} falsch / ${x.right} richtig · Stufe ${x.level||0}</p>`).join('')||'<p>Noch keine Lernversuche.</p>';
+ let dates=[];for(let i=6;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);dates.push(d.toISOString().slice(0,10))}
+ document.getElementById('week').innerHTML=dates.map(d=>{let x=S.days[d]||{sec:0,right:0};return `<div class="stat" style="display:inline-block;margin:3px">${d.slice(5)}<br><b>${Math.floor(x.sec/60)} Min.</b><br>${x.right||0} richtig</div>`}).join('');
+ document.getElementById('parentList').innerHTML=S.words.map(w=>`<p>${w.l==='en'?'🇬🇧':'🇫🇷'} ${w.d} → ${w.f}${w.u?' · '+w.u:''}</p>`).join('');
+}
+function changePin(){let p=prompt('Neue PIN (mind. 4 Zeichen):');if(p&&p.length>=4){S.pin=p;save();alert('PIN geändert.')}}
+renderList();updateTop();
+</script>
+</body>
+</html>
