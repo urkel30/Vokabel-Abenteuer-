@@ -1,307 +1,110 @@
-<!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vokabel-Abenteuer – Klasse 6</title>
-<style>
-body{font-family:Arial,sans-serif;margin:0;background:#f4f7fb;color:#182230}
-header{background:#315efb;color:white;padding:18px;text-align:center}
-main{max-width:900px;margin:auto;padding:16px}
-.card{background:white;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 3px 12px #0001}
-button,input,select{font-size:17px;padding:11px;border-radius:10px;border:1px solid #ccd4e0}
-button{cursor:pointer;background:#315efb;color:white;border:0;margin:5px}
-button.secondary{background:#687386}
-button.good{background:#18864b}
-button.warn{background:#b66b00}
-.hidden{display:none}
-.tabs button{width:30%}
-.word{font-size:32px;font-weight:bold;text-align:center;margin:28px 0}
-.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.choice{background:#eef2ff;color:#182230}
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vokabel-Abenteuer – Klasse 6</title><style>
+*{box-sizing:border-box}
+html{font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;margin:0;background:#f4f7fb;color:#182230;line-height:1.45;-webkit-text-size-adjust:100%}
+header{background:#315efb;color:#fff;padding:30px 18px 28px;text-align:center}
+header h1{font-size:clamp(30px,6vw,46px);line-height:1.1;margin:0 0 16px;font-weight:800}
+header>div:not(.small){font-size:clamp(17px,4vw,25px);line-height:1.3}
+main{width:100%;max-width:980px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 4px 18px rgba(24,34,48,.08)}
+.card h2{font-size:clamp(23px,5vw,30px);margin:0 0 20px;line-height:1.2}
+.card h3{line-height:1.25}
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+button,input,select{font:inherit;font-size:17px;min-height:48px;border-radius:12px;border:1px solid #ccd4e0;margin:0;padding:11px 13px}
+button{cursor:pointer;background:#315efb;color:#fff;border:0;font-weight:600;white-space:normal;line-height:1.2}
+button:active{transform:translateY(1px)}
+.secondary{background:#687386}.good{background:#18864b}.warn{background:#b66b00}
+.hidden{display:none!important}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.grid select{width:100%;background:#fff;color:#182230;min-width:0}
+.word{font-size:clamp(30px,8vw,44px);font-weight:800;text-align:center;margin:28px 8px;padding:8px;line-height:1.2;overflow-wrap:anywhere}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice{background:#eef2ff;color:#182230;min-height:58px}
 .choice.crossed{text-decoration:line-through;opacity:.45}
 .stats{display:flex;gap:10px;flex-wrap:wrap}
-.stat{padding:12px;background:#eef2ff;border-radius:12px}
-table{width:100%;border-collapse:collapse}
-td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left}
-.small{font-size:13px;color:#687386}
-</style>
-</head>
-<body>
-<header><h1>📚 Vokabel-Abenteuer</h1><div>Englisch & Französisch · Klasse 6 Realschule</div><div id="todayLine" class="small" style="color:white;margin-top:6px"></div></header>
-<main>
-<div class="card">
-<div class="tabs">
-<button onclick="show('learn')">Lernen</button>
-<button onclick="show('add')">Vokabeln</button>
-<button onclick="show('parent')">Elternbereich</button>
-</div>
-</div>
-
-<section id="learn">
-<div class="card">
-<h2>🎯 Lernpaket wählen</h2>
-<select id="lang"><option value="en">🇬🇧 Englisch</option><option value="fr">🇫🇷 Französisch</option></select>
-<select id="direction"><option value="de-to-foreign">Deutsch → Fremdsprache</option><option value="foreign-to-de">Fremdsprache → Deutsch</option></select>
-<select id="mode"><option value="write">✍️ Antwort eingeben</option><option value="mc">🔘 Multiple Choice</option></select>
-<select id="roundSize"><option value="10">10 Vokabeln</option><option value="20">20 Vokabeln</option><option value="30">30 Vokabeln</option></select>
-<button onclick="start()">Lernrunde starten</button>
-<p class="small">💡 Vokabeln, die du falsch beantwortest, kommen schneller wieder. Sichere Vokabeln werden mit größeren Abständen wiederholt.</p><div id="dueInfo" class="small"></div>
-</div>
-<div id="session" class="card hidden">
-<div class="stats"><div class="stat">⭐ <span id="stars">0</span></div><div class="stat">🔥 Serie: <span id="streak">0</span></div><div class="stat">⏱️ <span id="time">0:00</span></div></div>
-<div class="word" id="question">–</div>
-<div id="answerArea"></div>
-<div id="feedback"></div>
-<button class="secondary" onclick="finish()">Lernrunde beenden</button>
-<button class="warn" onclick="startTest()">📝 Test starten</button>
-<div id="rewardInfo" class="small"></div>
-</div>
-</section>
-
-<section id="add" class="hidden">
-<div class="card">
-<h2>➕ Eigene Vokabeln</h2>
-<p class="small">Du kannst deine Schulvokabeln selbst eintragen. Eine Vokabel gehört immer zu einer Sprache.</p>
-<select id="addLang"><option value="en">🇬🇧 Englisch</option><option value="fr">🇫🇷 Französisch</option></select>
-<input id="native" placeholder="Deutsch, z. B. Haus">
-<input id="foreign" placeholder="Fremdsprache, z. B. house">
-<input id="unit" placeholder="Lektion/Thema, z. B. Unit 2 (optional)">
-<button onclick="addWord()">Vokabel speichern</button>
-<div id="list"></div>
-</div>
-</section>
-
-<section id="parent" class="hidden">
-<div class="card">
-<h2>🔒 Elternbereich</h2>
-<div id="login"><input id="pin" type="password" placeholder="PIN"><button onclick="login()">Öffnen</button></div>
-<div id="parentContent" class="hidden">
-<div class="stats">
-<div class="stat">⭐ Punkte: <b id="pStars">0</b></div>
-<div class="stat">⏱️ Lernzeit heute: <b id="pTime">0 Min.</b></div>
-<div class="stat">🇬🇧 Englisch: <b id="pEn">0</b></div>
-<div class="stat">🇫🇷 Französisch: <b id="pFr">0</b></div>
-<div class="stat">🎯 Tests bestanden: <b id="pTests">0</b></div>
-</div>
-<h3>📅 Lernstatistik</h3><div id="week"></div>
-<h3>Schwierigste Vokabeln</h3><div id="hard"></div>
-<h3>Vokabelliste</h3><div id="parentList"></div>
-<button class="warn" onclick="changePin()">PIN ändern</button><button class="secondary" onclick="resetLearningSchedule()">Wiederholungsplan zurücksetzen</button>
-</div>
-</div>
-</section>
-</main>
-
-<script>
-const KEY='vok6';
-let S=JSON.parse(localStorage.getItem(KEY)||'null')||{
- words:[
-  {l:'en',d:'Haus',f:'house'},{l:'en',d:'Freund',f:'friend'},{l:'en',d:'Schule',f:'school'},
-  {l:'en',d:'essen',f:'eat'},{l:'en',d:'spielen',f:'play'},
-  {l:'fr',d:'Haus',f:'maison'},{l:'fr',d:'Freund',f:'ami'},{l:'fr',d:'Schule',f:'école'},
-  {l:'fr',d:'essen',f:'manger'},{l:'fr',d:'spielen',f:'jouer'}
- ],
- stars:0,phone:0,pin:'1234',stats:{},days:{},tests:{en:0,fr:0}
-};
-let cur=null, timer=null, started=0,lastAction=0,active=false,streak=0,mode='write',lang='en',choices=[],direction='de-to-foreign',roundLeft=0,testMode=false,testCorrect=0,testTotal=0;
-
-function save(){localStorage.setItem(KEY,JSON.stringify(S))}
-function today(){return new Date().toISOString().slice(0,10)}
-function ensureDay(){
- let d=today();
- if(!S.days[d])S.days[d]={sec:0,right:0,learnBlocks:0};
- return S.days[d]
+.stat{padding:12px 14px;background:#eef2ff;border-radius:12px;flex:1 1 150px;min-width:0}
+.small{font-size:14px;color:#687386}
+table{width:100%;border-collapse:collapse;display:block;overflow-x:auto}td,th{padding:9px;border-bottom:1px solid #ddd;text-align:left}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#eef2ff;margin:2px;font-size:13px}
+.progress{height:12px;background:#e5e9f0;border-radius:10px;overflow:hidden}.progress>div{height:100%;width:0;background:#315efb}
+#answerArea{display:flex;gap:10px;align-items:stretch;margin-bottom:12px}
+#answerArea input{flex:1;min-width:0}
+#answerArea button{flex:0 0 auto}
+#feedback{min-height:30px}
+#add input,#add select{width:100%;margin-bottom:10px}
+#add button{width:100%}
+#session .secondary{margin-top:8px}
+#list p,#hard p,#parentList p{overflow-wrap:anywhere}
+@media(max-width:700px){
+  main{padding:10px}
+  .card{padding:18px;border-radius:20px;margin:10px 0}
+  .tabs{gap:8px}
+  .tabs button{min-height:54px;padding:9px 6px;font-size:16px}
+  .grid{grid-template-columns:1fr;gap:10px}
+  .grid select{min-height:54px;font-size:17px}
+  .choices{grid-template-columns:1fr;gap:10px}
+  .choice{min-height:56px}
+  #answerArea{flex-direction:column}
+  #answerArea button{width:100%}
+  .stats{gap:8px}.stat{flex:1 1 135px;padding:10px 12px}
 }
-function addLearningSeconds(sec){
- if(sec<=0)return;
- let d=ensureDay(), before=Math.floor(d.sec/900);
- d.sec+=sec;
- let after=Math.floor(d.sec/900);
- if(after>before){
-   S.phone+=(after-before)*5;
-   d.learnBlocks=after;
- }
- save(); updateTime(); updateTop()
+@media(max-width:390px){
+  header{padding:24px 12px}
+  header h1{font-size:30px}
+  .tabs{grid-template-columns:1fr}
+  .tabs button{width:100%}
+  .card{padding:15px}
 }
-function activeTick(){
- if(!active)return;
- if(document.hidden){active=false;return}
- let now=Date.now();
- let dt=Math.min(2,(now-started)/1000);
- started=now;
- if(now-lastAction>90000){active=false; addLearningSeconds(dt); return}
- addLearningSeconds(dt);
-}
-function touch(){if(!active)active=true;lastAction=Date.now();started=Date.now()}
-function updateTime(){
- let sec=ensureDay().sec;
- let t=Math.floor(sec/60)+':'+String(Math.floor(sec%60)).padStart(2,'0');
- document.getElementById('time').textContent=t
-}
-function updateTop(){
- let d=ensureDay();
- document.getElementById('topStars').textContent=S.stars;
- document.getElementById('topPhone').textContent=S.phone+' Min.';
- document.getElementById('topTime').textContent=Math.floor(d.sec/60)+' Min.';
- document.getElementById('todayLine').textContent='Heute gelernt: '+Math.floor(d.sec/60)+' Min. · 15 Min. Lernen = 5 Min. Handyzeit';
-}
-setInterval(activeTick,1000);
-document.addEventListener('visibilitychange',()=>{if(document.hidden){active=false}else if(cur){touch()}});
-updateTop();
-
-function show(id){['learn','add','parent'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));if(id==='add')renderList()}
-function start(){
- lang=document.getElementById('lang').value;
- mode=document.getElementById('mode').value;
- direction=document.getElementById('direction').value;
- roundLeft=parseInt(document.getElementById('roundSize').value,10);
- testMode=false;testCorrect=0;testTotal=0;
- if(pool().length===0){alert('Bitte zuerst Vokabeln für diese Sprache eintragen.');return}
- document.getElementById('session').classList.remove('hidden');
- streak=0;touch();next();updateTime();updateTop()
-}
-function pool(){
- return S.words.filter(w=>w.l===lang)
-}
-function ensureWordState(w){let k=w.l+'|'+w.d+'|'+w.f;if(!S.stats[k])S.stats[k]={l:w.l,d:w.d,f:w.f,right:0,wrong:0,level:0,next:0,last:0};let x=S.stats[k];if(x.level===undefined)x.level=0;if(x.next===undefined)x.next=0;return x}
-function dueWords(){let now=Date.now();return pool().filter(w=>ensureWordState(w).next<=now)}
-function chooseWord(){let p=pool(),due=dueWords(),c=due.length?due:p,weighted=[];c.forEach(w=>{let x=ensureWordState(w),weight=1;if(x.level===0)weight+=4;if(x.wrong>x.right)weight+=4;else if(x.wrong>0)weight+=2;if(due.includes(w))weight+=5;for(let i=0;i<weight;i++)weighted.push(w)});return weighted[Math.floor(Math.random()*weighted.length)]}
-function scheduleWord(ok){let x=ensureWordState(cur),now=Date.now();if(!ok){x.level=0;x.next=now+5*60*1000}else{x.level=Math.min(6,(x.level||0)+1);let iv=[10*60*1000,60*60*1000,6*60*60*1000,24*60*60*1000,3*24*60*60*1000,7*24*60*60*1000];x.next=now+iv[x.level-1]}x.last=now}
-function dueLabel(){let e=document.getElementById('dueInfo');if(e)e.textContent='📌 '+dueWords().length+' von '+pool().length+' Vokabeln sind jetzt zur Wiederholung fällig.'}
-function next(){
- document.getElementById('feedback').innerHTML='';
- if(!testMode && roundLeft<=0){finish();return}
- if(testMode && testTotal>=10){finishTest();return}
- cur=chooseWord();
- dueLabel();
- document.getElementById('question').textContent=direction==='de-to-foreign'?cur.d:cur.f;
- touch();
- if(mode==='write'){
-   document.getElementById('answerArea').innerHTML='<input id="ans" autocomplete="off" placeholder="'+(direction==='de-to-foreign'?'Deine Übersetzung':'Deutsches Wort')+'"><button class="good" onclick="checkWrite()">Prüfen</button>';
-   document.getElementById('ans').focus();
-   document.getElementById('ans').onkeydown=e=>{if(e.key==='Enter')checkWrite()};
- }else{
-   choices=makeChoices(cur);
-   document.getElementById('answerArea').innerHTML='<div class="choices">'+choices.map((x,i)=>`<button class="choice" onclick="checkChoice(${i},this)">${x}</button>`).join('')+'</div>';
- }
- document.getElementById('rewardInfo').textContent=testMode?'Test: '+testTotal+'/10 · Bestehen ab 8 richtigen':'Noch '+roundLeft+' Aufgaben in dieser Runde';
-}
-function targetAnswer(){return direction==='de-to-foreign'?cur.f:cur.d}
-function record(ok){
- let k=cur.l+'|'+cur.d+'|'+cur.f;
- if(!S.stats[k])S.stats[k]={l:cur.l,d:cur.d,f:cur.f,right:0,wrong:0,level:0,next:0,last:0};
- ensureWordState(cur);
- if(ok){
-   S.stats[k].right++;ensureDay().right++;streak++;S.stars++;
-   if(testMode)testCorrect++;
-   document.getElementById('feedback').innerHTML='<p>✅ Richtig! +1 ⭐</p>'
- }else{
-   S.stats[k].wrong++;streak=0;
-   document.getElementById('feedback').innerHTML='<p>❌ Falsch. Richtig wäre: <b>'+targetAnswer()+'</b></p>'
- }
- scheduleWord(ok);
- save();document.getElementById('stars').textContent=S.stars;document.getElementById('streak').textContent=streak;renderParent();updateTop()
-}
-function checkWrite(){
- let a=document.getElementById('ans').value;
- if(!a.trim())return;
- let ok=norm(a)===norm(targetAnswer());
- record(ok);
- if(testMode){testTotal++; if(!ok){document.getElementById('ans').value=''} setTimeout(next,650);return}
- if(ok){roundLeft--;setTimeout(next,650)}else{document.getElementById('ans').value='';document.getElementById('ans').focus()}
-}
-function makeChoices(w){
- let correct=targetAnswer();
- let arr=[correct],others=pool().filter(x=>x!==w).sort(()=>Math.random()-.5);
- others.slice(0,3).forEach(x=>arr.push(direction==='de-to-foreign'?x.f:x.d));
- while(arr.length<4)arr.push(correct+'?');
- return arr.sort(()=>Math.random()-.5)
-}
-function checkChoice(i,btn){
- if(btn.classList.contains('crossed'))return;
- let ok=norm(choices[i])===norm(targetAnswer());
- if(ok){record(true); if(testMode)testTotal++; else roundLeft--; setTimeout(next,650)}
- else{btn.classList.add('crossed');record(false);if(testMode)testTotal++; }
-}
-function finishTest(){
- active=false;
- let passed=testCorrect>=8;
- if(passed){S.phone+=5;S.stars+=10;S.tests[lang]=(S.tests[lang]||0)+1}
- save();
- document.getElementById('feedback').innerHTML=passed?'<h3>🎉 Test bestanden!</h3><p>+5 Minuten Handyzeit und +10 ⭐</p>':'<h3>Test beendet</h3><p>Leider noch nicht bestanden. Du brauchst 8 von 10.</p>';
- document.getElementById('rewardInfo').textContent='Ergebnis: '+testCorrect+'/10';
- updateTop();renderParent()
-}
-function startTest(){
- if(pool().length<4){alert('Für einen Test brauchst du mindestens 4 Vokabeln.');return}
- lang=document.getElementById('lang').value;mode='write';direction=document.getElementById('direction').value;
- testMode=true;testCorrect=0;testTotal=0;roundLeft=0;streak=0;touch();
- document.getElementById('session').classList.remove('hidden');next()
-}
-function finish(){
- active=false;
- document.getElementById('session').classList.add('hidden');
- renderParent();updateTop()
-}
-
-function norm(x){return x.toLowerCase().trim().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')}
-function record(ok){
- let k=cur.l+'|'+cur.d+'|'+cur.f;
- if(!S.stats[k])S.stats[k]={l:cur.l,d:cur.d,f:cur.f,right:0,wrong:0};
- if(ok){S.stats[k].right++;ensureDay().right++;streak++;S.stars++;document.getElementById('feedback').innerHTML='<p>✅ Richtig! +1 ⭐</p>'}
- else{S.stats[k].wrong++;streak=0;document.getElementById('feedback').innerHTML='<p>❌ Noch nicht. Die richtige Antwort ist: <b>'+cur.f+'</b></p>'}
- save();document.getElementById('stars').textContent=S.stars;document.getElementById('streak').textContent=streak;renderParent();
-}
-function checkWrite(){
- let a=document.getElementById('ans').value;if(!a.trim())return;
- let ok=norm(a)===norm(cur.f);record(ok);
- if(!ok){document.getElementById('ans').value='';document.getElementById('ans').focus()}
- else{setTimeout(next,700)}
-}
-function makeChoices(w){
- let arr=[w.f];let others=pool().filter(x=>x!==w).sort(()=>Math.random()-.5);
- others.slice(0,3).forEach(x=>arr.push(x.f));
- while(arr.length<4)arr.push(w.f+'?');
- return arr.sort(()=>Math.random()-.5)
-}
-function checkChoice(i,btn){
- if(btn.classList.contains('crossed'))return;
- if(norm(choices[i])===norm(cur.f)){record(true);setTimeout(next,700)}
- else{btn.classList.add('crossed');record(false)}
-}
-function finish(){active=false;document.getElementById('session').classList.add('hidden');renderParent()}
-
-function addWord(){
- let l=document.getElementById('addLang').value,d=document.getElementById('native').value.trim(),f=document.getElementById('foreign').value.trim(),u=document.getElementById('unit').value.trim();
- if(!d||!f)return alert('Bitte beide Felder ausfüllen.');
- S.words.push({l,d,f,u});save();document.getElementById('native').value='';document.getElementById('foreign').value='';document.getElementById('unit').value='';renderList()
-}
-function renderList(){
- document.getElementById('list').innerHTML=S.words.map((w,i)=>`<p>${w.l==='en'?'🇬🇧':'🇫🇷'} <b>${w.d}</b> → ${w.f} <button class="secondary" onclick="del(${i})">Löschen</button></p>`).join('')
-}
-function del(i){if(confirm('Vokabel löschen?')){S.words.splice(i,1);save();renderList()}}
-
-function login(){
- if(document.getElementById('pin').value===S.pin){document.getElementById('login').classList.add('hidden');document.getElementById('parentContent').classList.remove('hidden');renderParent()}
- else alert('Falsche PIN.')
-}
-function resetLearningSchedule(){if(!confirm('Alle Wiederholungsstufen zurücksetzen? Punkte und Vokabelliste bleiben erhalten.'))return;Object.values(S.stats).forEach(x=>{x.level=0;x.next=0});save();renderParent();alert('Wiederholungsplan zurückgesetzt.')}
-function renderParent(){
- if(document.getElementById('parentContent').classList.contains('hidden'))return;
- let d=ensureDay();document.getElementById('pStars').textContent=S.stars;
- document.getElementById('pTime').textContent=Math.floor(d.sec/60)+' Min.';
- document.getElementById('pEn').textContent=S.words.filter(w=>w.l==='en').length;
- document.getElementById('pFr').textContent=S.words.filter(w=>w.l==='fr').length;document.getElementById('pTests').textContent=(S.tests.en||0)+(S.tests.fr||0);
- Object.values(S.stats).forEach(x=>{if(x.level===undefined)x.level=0;if(x.next===undefined)x.next=0});
- let stats=Object.values(S.stats).sort((a,b)=>(b.wrong/(b.right+b.wrong||1))-(a.wrong/(a.right+a.wrong||1)));
- document.getElementById('hard').innerHTML=stats.slice(0,10).map(x=>`<p>${x.l==='en'?'🇬🇧':'🇫🇷'} <b>${x.d}</b> → ${x.f}: ${x.wrong} falsch / ${x.right} richtig · Stufe ${x.level||0}</p>`).join('')||'<p>Noch keine Lernversuche.</p>';
- let dates=[];for(let i=6;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);dates.push(d.toISOString().slice(0,10))}
- document.getElementById('week').innerHTML=dates.map(d=>{let x=S.days[d]||{sec:0,right:0};return `<div class="stat" style="display:inline-block;margin:3px">${d.slice(5)}<br><b>${Math.floor(x.sec/60)} Min.</b><br>${x.right||0} richtig</div>`}).join('');
- document.getElementById('parentList').innerHTML=S.words.map(w=>`<p>${w.l==='en'?'🇬🇧':'🇫🇷'} ${w.d} → ${w.f}${w.u?' · '+w.u:''}</p>`).join('');
-}
-function changePin(){let p=prompt('Neue PIN (mind. 4 Zeichen):');if(p&&p.length>=4){S.pin=p;save();alert('PIN geändert.')}}
-renderList();updateTop();
-</script>
-</body>
-</html>
+</style></head><body><header><h1>📚 Vokabel-Abenteuer</h1><div>Englisch & Französisch · Klasse 6 Realschule</div><div id="todayLine" class="small" style="color:white;margin-top:6px"></div></header><main>
+<div class="card"><div class="tabs"><button onclick="show('learn')">Lernen</button><button onclick="show('add')">Vokabeln</button><button onclick="show('parent')">Elternbereich</button></div></div>
+<section id="learn"><div class="card"><h2>🎯 Lernpaket</h2><div class="grid"><select id="lang" onchange="refreshUnits()"><option value="en">🇬🇧 Englisch</option><option value="fr">🇫🇷 Französisch</option></select><select id="unit"><option value="all">Alle Themen</option></select><select id="difficulty"><option value="all">Alle Schwierigkeitsstufen</option><option value="1">🟢 Leicht</option><option value="2">🟡 Mittel</option><option value="3">🔴 Schwer</option></select><select id="direction"><option value="de-to-foreign">Deutsch → Fremdsprache</option><option value="foreign-to-de">Fremdsprache → Deutsch</option></select><select id="mode"><option value="write">✍️ Antwort eingeben</option><option value="mc">🔘 Multiple Choice</option></select><select id="roundSize"><option value="10">10 Vokabeln</option><option value="20">20 Vokabeln</option><option value="30">30 Vokabeln</option></select></div><button onclick="start()">Lernrunde starten</button><button class="warn" onclick="startTest()">📝 Test starten</button><p class="small">Das Training wird mit zunehmender Sicherheit schwieriger. Falsche Wörter kommen nach ca. 5 Minuten zurück; sichere Wörter nach 10 Minuten, 1 Stunde, 6 Stunden, 1 Tag, 3 Tagen und 7 Tagen.</p><div id="dueInfo" class="small"></div></div>
+<div id="session" class="card hidden"><div class="stats"><div class="stat">⭐ <span id="stars">0</span></div><div class="stat">🔥 Serie: <span id="streak">0</span></div><div class="stat">⏱️ <span id="time">0:00</span></div></div><div class="word" id="question">–</div><div id="answerArea"></div><div id="feedback"></div><button class="secondary" onclick="finish()">Lernrunde beenden</button><div id="rewardInfo" class="small"></div></div></section>
+<section id="add" class="hidden"><div class="card"><h2>➕ Eigene Schulvokabeln</h2><p class="small">Hier kannst du die Vokabeln aus deinem eigenen Headlight-Buch ergänzen. Die App speichert sie dauerhaft auf dem Gerät.</p><select id="addLang"><option value="en">🇬🇧 Englisch</option><option value="fr">🇫🇷 Französisch</option></select><input id="native" placeholder="Deutsch"><input id="foreign" placeholder="Fremdsprache"><input id="unitAdd" placeholder="Unit / Thema"><select id="diffAdd"><option value="1">Leicht</option><option value="2">Mittel</option><option value="3">Schwer</option></select><button onclick="addWord()">Vokabel speichern</button><div id="list"></div></div></section>
+<section id="parent" class="hidden"><div class="card"><h2>🔒 Elternbereich</h2><div id="login"><input id="pin" type="password" placeholder="PIN"><button onclick="login()">Öffnen</button><p class="small">Standard-PIN: 1234</p></div><div id="parentContent" class="hidden"><div class="stats"><div class="stat">⭐ Punkte: <b id="pStars">0</b></div><div class="stat">⏱️ Lernzeit heute: <b id="pTime">0 Min.</b></div><div class="stat">🇬🇧 Englisch: <b id="pEn">0</b></div><div class="stat">🇫🇷 Französisch: <b id="pFr">0</b></div><div class="stat">🎯 Tests bestanden: <b id="pTests">0</b></div><div class="stat">📱 Handyzeit: <b id="pPhone">0 Min.</b></div></div><h3>📅 Letzte 7 Tage</h3><div id="week"></div><h3>🔥 Schwierigste Vokabeln</h3><div id="hard"></div><h3>📚 Fortschritt nach Themen</h3><div id="unitsStats"></div><h3>Vokabelliste</h3><div id="parentList"></div><button class="warn" onclick="changePin()">PIN ändern</button><button class="secondary" onclick="resetLearningSchedule()">Wiederholungsplan zurücksetzen</button></div></div></section>
+</main><script>
+const KEY='vok6_headlight_v2';
+const BASE_EN=[
+['Getting started','family','Familie',1],['Getting started','parents','Eltern',1],['Getting started','brother','Bruder',1],['Getting started','sister','Schwester',1],['Getting started','grandparents','Großeltern',1],['Getting started','friend','Freund/Freundin',1],['Getting started','best friend','beste Freundin/bester Freund',2],['Getting started','classmate','Mitschüler/in',2],['Getting started','school','Schule',1],['Getting started','classroom','Klassenzimmer',1],['Getting started','teacher','Lehrer/in',1],['Getting started','lesson','Unterrichtsstunde',1],['Getting started','homework','Hausaufgaben',2],['Getting started','break','Pause',1],['Getting started','subject','Schulfach',2],
+['Home and everyday life','house','Haus',1],['Home and everyday life','flat','Wohnung',1],['Home and everyday life','room','Zimmer',1],['Home and everyday life','kitchen','Küche',1],['Home and everyday life','bedroom','Schlafzimmer',2],['Home and everyday life','bathroom','Badezimmer',1],['Home and everyday life','garden','Garten',1],['Home and everyday life','window','Fenster',1],['Home and everyday life','door','Tür',1],['Home and everyday life','neighbour','Nachbar/in',2],['Home and everyday life','tidy','ordentlich',2],['Home and everyday life','messy','unordentlich',2],['Home and everyday life','clean','sauber',1],['Home and everyday life','to clean','putzen',1],['Home and everyday life','to help','helfen',1],['Home and everyday life','to carry','tragen',2],
+['Free time','hobby','Hobby',1],['Free time','sport','Sport',1],['Free time','football','Fußball',1],['Free time','handball','Handball',1],['Free time','swimming','Schwimmen',1],['Free time','cycling','Radfahren',1],['Free time','music','Musik',1],['Free time','film','Film',1],['Free time','book','Buch',1],['Free time','game','Spiel',1],['Free time','to play','spielen',1],['Free time','to watch','anschauen',1],['Free time','to listen','zuhören',1],['Free time','to meet','treffen',2],['Free time','to practise','üben',2],['Free time','to win','gewinnen',2],['Free time','to lose','verlieren',2],['Free time','exciting','spannend',2],['Free time','boring','langweilig',1],
+['Food and shopping','food','Essen',1],['Food and shopping','breakfast','Frühstück',1],['Food and shopping','lunch','Mittagessen',1],['Food and shopping','dinner','Abendessen',1],['Food and shopping','bread','Brot',1],['Food and shopping','cheese','Käse',1],['Food and shopping','milk','Milch',1],['Food and shopping','water','Wasser',1],['Food and shopping','apple','Apfel',1],['Food and shopping','banana','Banane',1],['Food and shopping','vegetable','Gemüse',1],['Food and shopping','fruit','Obst',1],['Food and shopping','hungry','hungrig',1],['Food and shopping','thirsty','durstig',1],['Food and shopping','cheap','billig',1],['Food and shopping','expensive','teuer',1],['Food and shopping','price','Preis',2],['Food and shopping','shop','Geschäft',1],['Food and shopping','customer','Kunde/Kundin',2],['Food and shopping','to buy','kaufen',1],['Food and shopping','to pay','bezahlen',1],['Food and shopping','to choose','auswählen',2],['Food and shopping','to order','bestellen',2],
+['Town and places','town','Stadt',1],['Town and places','village','Dorf',1],['Town and places','street','Straße',1],['Town and places','park','Park',1],['Town and places','station','Bahnhof',1],['Town and places','bus stop','Bushaltestelle',2],['Town and places','library','Bibliothek',2],['Town and places','cinema','Kino',1],['Town and places','museum','Museum',1],['Town and places','sports centre','Sportzentrum',2],['Town and places','supermarket','Supermarkt',1],['Town and places','hospital','Krankenhaus',1],['Town and places','police station','Polizeiwache',2],['Town and places','left','links',1],['Town and places','right','rechts',1],['Town and places','straight on','geradeaus',2],['Town and places','near','nah',1],['Town and places','far','weit',1],['Town and places','between','zwischen',2],['Town and places','opposite','gegenüber',3],
+['Travel and holidays','holiday','Ferien/Urlaub',1],['Travel and holidays','journey','Reise',2],['Travel and holidays','trip','Ausflug/Reise',2],['Travel and holidays','hotel','Hotel',1],['Travel and holidays','room','Zimmer',1],['Travel and holidays','ticket','Fahrkarte/Ticket',1],['Travel and holidays','train','Zug',1],['Travel and holidays','bus','Bus',1],['Travel and holidays','plane','Flugzeug',1],['Travel and holidays','airport','Flughafen',1],['Travel and holidays','luggage','Gepäck',2],['Travel and holidays','map','Karte',1],['Travel and holidays','beach','Strand',1],['Travel and holidays','mountain','Berg',1],['Travel and holidays','weather','Wetter',1],['Travel and holidays','sunny','sonnig',1],['Travel and holidays','cloudy','bewölkt',2],['Travel and holidays','rainy','regnerisch',2],['Travel and holidays','to travel','reisen',1],['Travel and holidays','to arrive','ankommen',2],['Travel and holidays','to leave','abfahren/verlassen',2],
+['People and feelings','happy','glücklich',1],['People and feelings','sad','traurig',1],['People and feelings','angry','wütend',1],['People and feelings','tired','müde',1],['People and feelings','afraid','ängstlich',2],['People and feelings','proud','stolz',2],['People and feelings','friendly','freundlich',1],['People and feelings','kind','nett/gütig',1],['People and feelings','funny','lustig',1],['People and feelings','quiet','ruhig',1],['People and feelings','loud','laut',1],['People and feelings','clever','klug',1],['People and feelings','careful','vorsichtig',2],['People and feelings','difficult','schwierig',1],['People and feelings','easy','einfach',1],['People and feelings','important','wichtig',2],['People and feelings','to like','mögen',1],['People and feelings','to love','lieben',1],['People and feelings','to hate','hassen',1],['People and feelings','to remember','sich erinnern',3],
+['Actions and language','to be','sein',1],['Actions and language','to have','haben',1],['Actions and language','to go','gehen',1],['Actions and language','to come','kommen',1],['Actions and language','to get','bekommen/holen',2],['Actions and language','to give','geben',1],['Actions and language','to take','nehmen',1],['Actions and language','to make','machen/herstellen',1],['Actions and language','to do','tun/machen',1],['Actions and language','to know','wissen/kennen',2],['Actions and language','to think','denken',2],['Actions and language','to understand','verstehen',2],['Actions and language','to ask','fragen',1],['Actions and language','to answer','antworten',1],['Actions and language','to tell','erzählen/sagen',2],['Actions and language','to speak','sprechen',1],['Actions and language','to read','lesen',1],['Actions and language','to write','schreiben',1],['Actions and language','to learn','lernen',1],['Actions and language','to forget','vergessen',2],['Actions and language','because','weil',1],['Actions and language','although','obwohl',3],['Actions and language','usually','normalerweise',2],['Actions and language','sometimes','manchmal',1],['Actions and language','already','schon/bereits',2],['Actions and language','still','immer noch',2]
+];
+const BASE_FR=[['Basics','bonjour','hallo',1],['Basics','au revoir','auf Wiedersehen',1],['Basics','merci','danke',1],['Basics','s’il vous plaît','bitte',1],['Basics','famille','Familie',1],['Basics','ami','Freund',1],['Basics','école','Schule',1],['Basics','maison','Haus',1],['Basics','manger','essen',1],['Basics','boire','trinken',1],['Basics','jouer','spielen',1],['Basics','livre','Buch',1],['Basics','professeur','Lehrer/in',2],['Basics','classe','Klasse',1],['Basics','devoirs','Hausaufgaben',2],['Food','pain','Brot',1],['Food','eau','Wasser',1],['Food','lait','Milch',1],['Food','pomme','Apfel',1],['Food','fromage','Käse',1],['Free time','sport','Sport',1],['Free time','musique','Musik',1],['Free time','film','Film',1],['Free time','nager','schwimmen',2],['Free time','lire','lesen',1],['Town','ville','Stadt',1],['Town','rue','Straße',1],['Town','gare','Bahnhof',1],['Town','magasin','Geschäft',2],['Feelings','heureux','glücklich',2],['Feelings','triste','traurig',1],['Feelings','fatigué','müde',2],['Feelings','drôle','lustig',2],['Feelings','important','wichtig',2],['Travel','vacances','Ferien/Urlaub',2],['Travel','hôtel','Hotel',1],['Travel','billet','Ticket',2],['Travel','train','Zug',1],['Travel','plage','Strand',1],['Travel','voyager','reisen',2]
+];
+function makeWords(){return [...BASE_EN.map(x=>({l:'en',u:x[0],f:x[1],d:x[2],diff:x[3],builtin:true})),...BASE_FR.map(x=>({l:'fr',u:x[0],f:x[1],d:x[2],diff:x[3],builtin:true}))]}
+let S=JSON.parse(localStorage.getItem(KEY)||'null');if(!S){S={words:makeWords(),stars:0,phone:0,pin:'1234',stats:{},days:{},tests:{en:0,fr:0}}}else{S.words=S.words||[];S.stats=S.stats||{};S.days=S.days||{};S.tests=S.tests||{en:0,fr:0};S.phone=S.phone||0;S.stars=S.stars||0}
+let cur=null,choices=[],lang='en',direction='de-to-foreign',mode='write',roundLeft=0,testMode=false,testCorrect=0,testTotal=0,streak=0,active=false,lastAction=0,lastTick=0;
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}function today(){return new Date().toISOString().slice(0,10)}function day(){let d=today();if(!S.days[d])S.days[d]={sec:0,right:0};return S.days[d]}
+function updateTop(){let d=day();document.getElementById('todayLine').textContent='Heute: '+Math.floor(d.sec/60)+' Min. · 15 aktive Lernminuten = 5 Min. Handyzeit';if(document.getElementById('time'))document.getElementById('time').textContent=Math.floor(d.sec/60)+':'+String(d.sec%60).padStart(2,'0')}
+function tick(){if(!active)return;let now=Date.now();let dt=Math.min(2,(now-(lastTick||now))/1000);lastTick=now;if(document.hidden||now-lastAction>90000){active=false;return}let d=day(),before=Math.floor(d.sec/900);d.sec+=dt;let after=Math.floor(d.sec/900);if(after>before)S.phone+=(after-before)*5;save();updateTop();renderParent()}
+setInterval(tick,1000);document.addEventListener('visibilitychange',()=>{if(document.hidden)active=false;else if(cur){active=true;lastAction=Date.now();lastTick=Date.now()}});document.addEventListener('pointerdown',()=>{if(cur){active=true;lastAction=Date.now();lastTick=Date.now()}});
+function show(id){['learn','add','parent'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));if(id==='add')renderList();if(id==='parent')renderParent()}
+function refreshUnits(){let l=document.getElementById('lang').value,sel=document.getElementById('unit');let units=[...new Set(S.words.filter(w=>w.l===l).map(w=>w.u||'Eigene'))];sel.innerHTML='<option value="all">Alle Themen</option>'+units.map(u=>'<option>'+esc(u)+'</option>').join('')}
+function pool(){let u=document.getElementById('unit').value,d=document.getElementById('difficulty').value;return S.words.filter(w=>w.l===lang&&(u==='all'||(w.u||'Eigene')===u)&&(d==='all'||String(w.diff||1)===d))}
+function state(w){let k=w.l+'|'+w.d+'|'+w.f;if(!S.stats[k])S.stats[k]={right:0,wrong:0,level:0,next:0};return S.stats[k]}
+function dueWords(){let n=Date.now();return pool().filter(w=>state(w).next<=n)}
+function chooseWord(){let p=pool(),due=dueWords(),c=due.length?due:p;if(!c.length)return null;let weighted=[];c.forEach(w=>{let s=state(w),weight=1;if(s.level===0)weight+=4;if(s.wrong>s.right)weight+=4;else if(s.wrong)weight+=2;if(due.includes(w))weight+=5;if((w.diff||1)===3)weight+=1;for(let i=0;i<weight;i++)weighted.push(w)});return weighted[Math.floor(Math.random()*weighted.length)]}
+function schedule(ok){let s=state(cur),now=Date.now();if(!ok){s.level=0;s.next=now+5*60*1000}else{s.level=Math.min(6,(s.level||0)+1);let iv=[10*60*1000,60*60*1000,6*60*60*1000,24*60*60*1000,3*24*60*60*1000,7*24*60*60*1000];s.next=now+iv[s.level-1]}}
+function norm(x){return String(x).toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,"'")}
+function start(){lang=document.getElementById('lang').value;direction=document.getElementById('direction').value;mode=document.getElementById('mode').value;roundLeft=+document.getElementById('roundSize').value;testMode=false;testCorrect=0;testTotal=0;streak=0;if(!pool().length)return alert('Für diese Auswahl sind noch keine Vokabeln vorhanden.');document.getElementById('session').classList.remove('hidden');active=true;lastAction=Date.now();lastTick=Date.now();next()}
+function next(){if(!testMode&&roundLeft<=0){finish();return}if(testMode&&testTotal>=10){finishTest();return}cur=chooseWord();if(!cur)return finish();document.getElementById('feedback').innerHTML='';document.getElementById('question').textContent=direction==='de-to-foreign'?cur.d:cur.f;let due=dueWords().length;document.getElementById('dueInfo').textContent='📌 '+due+' Vokabeln dieser Auswahl sind jetzt fällig.';document.getElementById('stars').textContent=S.stars;document.getElementById('streak').textContent=streak;document.getElementById('rewardInfo').textContent=testMode?'Test: '+testTotal+'/10 · Bestehen ab 8 richtigen':'Noch '+roundLeft+' Aufgaben';if(mode==='write'||testMode){document.getElementById('answerArea').innerHTML='<input id="ans" autocomplete="off" placeholder="Deine Antwort"><button class="good" onclick="checkWrite()">Prüfen</button>';let a=document.getElementById('ans');a.focus();a.onkeydown=e=>{if(e.key==='Enter')checkWrite()}}else{choices=makeChoices(cur);document.getElementById('answerArea').innerHTML='<div class="choices">'+choices.map((x,i)=>'<button class="choice" onclick="checkChoice('+i+',this)">'+esc(x)+'</button>').join('')+'</div>'}}
+function target(){return direction==='de-to-foreign'?cur.f:cur.d}function record(ok){let s=state(cur);ok?s.right++:s.wrong++;if(ok){S.stars++;streak++;day().right++;if(testMode)testCorrect++;document.getElementById('feedback').innerHTML='<p>✅ Richtig! +1 ⭐</p>'}else{streak=0;document.getElementById('feedback').innerHTML='<p>❌ Falsch. Richtig wäre: <b>'+esc(target())+'</b></p>'}schedule(ok);save();document.getElementById('stars').textContent=S.stars;document.getElementById('streak').textContent=streak;renderParent()}
+function checkWrite(){let a=document.getElementById('ans').value;if(!a.trim())return;let ok=norm(a)===norm(target());record(ok);if(testMode){testTotal++;setTimeout(next,650);return}if(ok){roundLeft--;setTimeout(next,650)}else{document.getElementById('ans').value='';document.getElementById('ans').focus()}}
+function makeChoices(w){let a=[target()],others=pool().filter(x=>x!==w).sort(()=>Math.random()-.5);others.slice(0,3).forEach(x=>a.push(direction==='de-to-foreign'?x.f:x.d));while(a.length<4)a.push(a[0]+'?');return a.sort(()=>Math.random()-.5)}
+function checkChoice(i,b){if(b.classList.contains('crossed'))return;let ok=norm(choices[i])===norm(target());if(ok){record(true);if(testMode)testTotal++;else roundLeft--;setTimeout(next,650)}else{b.classList.add('crossed');record(false);if(testMode)testTotal++}}
+function startTest(){lang=document.getElementById('lang').value;direction=document.getElementById('direction').value;if(S.words.filter(w=>w.l===lang).length<10)return alert('Für einen Test brauchst du mindestens 10 Vokabeln.');testMode=true;mode='write';testCorrect=0;testTotal=0;roundLeft=0;streak=0;document.getElementById('session').classList.remove('hidden');active=true;lastAction=Date.now();lastTick=Date.now();next()}
+function finishTest(){active=false;let passed=testCorrect>=8;if(passed){S.phone+=5;S.stars+=10;S.tests[lang]=(S.tests[lang]||0)+1}save();document.getElementById('feedback').innerHTML=passed?'<h3>🎉 Test bestanden!</h3><p>+5 Minuten Handyzeit und +10 ⭐</p>':'<h3>Test beendet</h3><p>'+testCorrect+'/10 – zum Bestehen brauchst du 8 richtige Antworten.</p>';document.getElementById('rewardInfo').textContent='Ergebnis: '+testCorrect+'/10';renderParent()}
+function finish(){active=false;document.getElementById('session').classList.add('hidden');renderParent();updateTop()}
+function addWord(){let l=document.getElementById('addLang').value,d=document.getElementById('native').value.trim(),f=document.getElementById('foreign').value.trim(),u=document.getElementById('unitAdd').value.trim()||'Eigene Vokabeln',diff=+document.getElementById('diffAdd').value;if(!d||!f)return alert('Bitte Deutsch und Fremdsprache ausfüllen.');S.words.push({l,d,f,u,diff,builtin:false});save();['native','foreign','unitAdd'].forEach(id=>document.getElementById(id).value='');renderList();refreshUnits();alert('Vokabel gespeichert.')}
+function renderList(){document.getElementById('list').innerHTML=S.words.map((w,i)=>'<p>'+ (w.l==='en'?'🇬🇧':'🇫🇷')+' <b>'+esc(w.d)+'</b> → '+esc(w.f)+' <span class="badge">'+esc(w.u||'Eigene')+'</span> <button class="secondary" onclick="del('+i+')">Löschen</button></p>').join('')}
+function del(i){if(S.words[i].builtin)return alert('Die integrierten Lernwörter können nicht gelöscht werden.');if(confirm('Vokabel löschen?')){S.words.splice(i,1);save();renderList();refreshUnits()}}
+function login(){if(document.getElementById('pin').value===S.pin){document.getElementById('login').classList.add('hidden');document.getElementById('parentContent').classList.remove('hidden');renderParent()}else alert('Falsche PIN.')}
+function changePin(){let p=prompt('Neue PIN (mind. 4 Zeichen):');if(p&&p.length>=4){S.pin=p;save();alert('PIN geändert.')}}function resetLearningSchedule(){if(!confirm('Alle Wiederholungsstufen zurücksetzen?'))return;Object.values(S.stats).forEach(s=>{s.level=0;s.next=0});save();renderParent();alert('Wiederholungsplan zurückgesetzt.')}
+function renderParent(){if(document.getElementById('parentContent').classList.contains('hidden'))return;let d=day();document.getElementById('pStars').textContent=S.stars;document.getElementById('pTime').textContent=Math.floor(d.sec/60)+' Min.';document.getElementById('pEn').textContent=S.words.filter(w=>w.l==='en').length;document.getElementById('pFr').textContent=S.words.filter(w=>w.l==='fr').length;document.getElementById('pTests').textContent=(S.tests.en||0)+(S.tests.fr||0);document.getElementById('pPhone').textContent=S.phone+' Min.';let ds=[];for(let i=6;i>=0;i--){let x=new Date();x.setDate(x.getDate()-i);ds.push(x.toISOString().slice(0,10))}document.getElementById('week').innerHTML=ds.map(x=>{let z=S.days[x]||{sec:0,right:0};return '<span class="stat" style="display:inline-block;margin:3px">'+x.slice(5)+'<br><b>'+Math.floor(z.sec/60)+' Min.</b><br>'+z.right+' richtig</span>'}).join('');let hard=Object.entries(S.stats).map(([k,s])=>({k,s,w:S.words.find(w=>w.l+'|'+w.d+'|'+w.f===k)})).filter(x=>x.w).sort((a,b)=>(b.s.wrong/(b.s.right+b.s.wrong||1))-(a.s.wrong/(a.s.right+a.s.wrong||1)));document.getElementById('hard').innerHTML=hard.slice(0,12).map(x=>'<p>'+ (x.w.l==='en'?'🇬🇧':'🇫🇷')+' <b>'+esc(x.w.d)+'</b> → '+esc(x.w.f)+' · '+x.s.wrong+' falsch / '+x.s.right+' richtig · Stufe '+(x.s.level||0)+'</p>').join('')||'<p>Noch keine Lernversuche.</p>';let us={};S.words.forEach(w=>{let u=w.u||'Eigene Vokabeln';us[w.l+'|'+u]??={total:0,done:0};us[w.l+'|'+u].total++;let s=state(w);if(s.level>=3)us[w.l+'|'+u].done++});document.getElementById('unitsStats').innerHTML=Object.entries(us).map(([k,v])=>{let [l,u]=k.split('|');let p=Math.round(v.done/v.total*100);return '<p><b>'+(l==='en'?'🇬🇧':'🇫🇷')+' '+esc(u)+'</b> – '+v.done+'/'+v.total+' sicher<div class="progress"><div style="width:'+p+'%"></div></div></p>'}).join('');document.getElementById('parentList').innerHTML=S.words.map(w=>'<p>'+(w.l==='en'?'🇬🇧':'🇫🇷')+' '+esc(w.d)+' → '+esc(w.f)+' · '+esc(w.u||'Eigene')+' · Stufe '+(state(w).level||0)+'</p>').join('')}
+function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+refreshUnits();renderList();updateTop();save();
+</script></body></html>
